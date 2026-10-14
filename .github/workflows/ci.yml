@@ -36,7 +36,7 @@ jobs:
         run: uv run python -m agent_threat_detection.contracts --check
       - name: Unit, security, chaos, performance and e2e tests (coverage gate 90%)
         run: uv run pytest --cov-report=xml
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: matrix.python == '3.12'
         with:
           name: coverage
@@ -150,7 +150,7 @@ jobs:
           fail-build: true
           severity-cutoff: high
           only-fixed: true
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: sbom
           path: sbom.cdx.json
