@@ -54,7 +54,8 @@ async def test_store_round_trip() -> None:
     )
     assert (await store.get_profile(agent)) == profile
     assert await store.processed([f"pg-{stamp}-1", "nope"]) == {f"pg-{stamp}-1"}
-    assert await store.find_open_alert(alert.dedup_key, since=now - timedelta(hours=1)) == alert
+    since = alert.last_seen - timedelta(hours=1)
+    assert await store.find_open_alert(alert.dedup_key, since=since) == alert
     with pytest.raises(ConflictError):
         await store.save_profile(AgentProfile.new(agent, at=now, order=3), expected_version=0)
     due = await store.due_outbox(now=now + timedelta(seconds=1), limit=1000)

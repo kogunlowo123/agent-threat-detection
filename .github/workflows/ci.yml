@@ -111,7 +111,18 @@ jobs:
         run: docker build -t agent-threat-detection:ci .
       - name: Container smoke test (starts, reports healthy)
         run: |
-          docker run -d --name atd -p 8080:8080             -e THREAT_ENVIRONMENT=ci -e THREAT_DEV_EPHEMERAL_KEYS=true             -e THREAT_PUBLIC_URL=http://localhost:8080             -e THREAT_DATABASE_URL=sqlite+aiosqlite:////tmp/atd.db             -e THREAT_AUDIT_LOG_PATH=/tmp/audit.jsonl             -e THREAT_SIEM_FILE_PATH=/tmp/ocsf.jsonl             -e THREAT_ANALYST_ISSUER=https://login.ci -e THREAT_ANALYST_AUDIENCE=atd             -e THREAT_ANALYST_JWKS_URL=https://login.ci/jwks             -e THREAT_AGENT_ISSUER=https://identity.ci -e THREAT_AGENT_AUDIENCE=agent-platform             -e THREAT_AGENT_JWKS_URL=https://identity.ci/.well-known/jwks.json             -e 'THREAT_MCP_ALLOWED_HOSTS=["localhost:8080"]'             agent-threat-detection:ci
+          docker run -d --name atd -p 8080:8080 \
+            -e THREAT_ENVIRONMENT=ci -e THREAT_DEV_EPHEMERAL_KEYS=true \
+            -e THREAT_PUBLIC_URL=http://localhost:8080 \
+            -e THREAT_DATABASE_URL=sqlite+aiosqlite:////tmp/atd.db \
+            -e THREAT_AUDIT_LOG_PATH=/tmp/audit.jsonl \
+            -e THREAT_SIEM_FILE_PATH=/tmp/ocsf.jsonl \
+            -e THREAT_ANALYST_ISSUER=https://login.ci -e THREAT_ANALYST_AUDIENCE=atd \
+            -e THREAT_ANALYST_JWKS_URL=https://login.ci/jwks \
+            -e THREAT_AGENT_ISSUER=https://identity.ci -e THREAT_AGENT_AUDIENCE=agent-platform \
+            -e THREAT_AGENT_JWKS_URL=https://identity.ci/.well-known/jwks.json \
+            -e 'THREAT_MCP_ALLOWED_HOSTS=["localhost:8080"]' \
+            agent-threat-detection:ci
           for i in $(seq 1 30); do
             curl -sf http://localhost:8080/readyz && break; sleep 1
           done
