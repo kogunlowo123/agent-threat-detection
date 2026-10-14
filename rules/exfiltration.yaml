@@ -1,0 +1,73 @@
+title: Agent sends data to a paste, tunnel or request-capture service
+id: atd-egress-paste-tunnel
+status: stable
+level: high
+description: >
+  Paste sites, tunnelling services and request bins are common drop points
+  for exfiltrated data and for prompt-injection callbacks.
+author: kogunlowo123
+date: 2026-10-14
+tags: [attack.exfiltration, attack.t1567, atlas.aml.t0057]
+logsource:
+  product: agent
+detection:
+  egress:
+    destination|endswith:
+      - pastebin.com
+      - paste.ee
+      - transfer.sh
+      - ngrok.io
+      - ngrok-free.app
+      - trycloudflare.com
+      - webhook.site
+      - requestbin.net
+      - pipedream.net
+      - interact.sh
+  condition: egress
+falsepositives:
+  - Developer agents testing webhooks; scope with a filter on agent_id.
+---
+title: Bulk read of restricted records
+id: atd-restricted-bulk-read
+status: stable
+level: high
+description: >
+  More than 40 successful reads of RESTRICTED data by one agent within ten
+  minutes: a staging pattern that precedes exfiltration.
+author: kogunlowo123
+date: 2026-10-14
+tags: [attack.collection, attack.t1213, atlas.aml.t0057]
+logsource:
+  product: agent
+detection:
+  read:
+    kind:
+      - tool_call
+      - authorization
+    classification|gte: 3
+    outcome: success
+  timeframe: 10m
+  condition: read | count() by agent_id > 40
+falsepositives:
+  - Clinical or HR agents with large legitimate batch jobs; raise the threshold per agent class.
+---
+title: Many distinct external destinations in a short window
+id: atd-egress-destination-spray
+status: stable
+level: medium
+description: >
+  Egress to more than eight distinct destinations in five minutes, which
+  matches chunked exfiltration and callback spraying.
+author: kogunlowo123
+date: 2026-10-14
+tags: [attack.exfiltration, attack.t1048]
+logsource:
+  product: agent
+  category: data_transfer
+detection:
+  egress:
+    destination|exists: true
+  timeframe: 5m
+  condition: egress | count(destination) by agent_id > 8
+falsepositives:
+  - Crawler agents; they should run under a dedicated namespace with this rule filtered.

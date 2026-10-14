@@ -1,0 +1,140 @@
+{{- /*
+StatefulSet so each replica owns a persistent volume for its own signed audit
+chain (/var/lib/agent-threat-detection/audit/<pod>.jsonl). A log shipper
+copies the files to WORM object storage provisioned by Terraform. Detection
+state lives in PostgreSQL, so any replica can process any agent; collectors
+should still partition batches by agent to avoid optimistic-lock retries.
+*/ -}}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "atd.fullname" . }}
+  labels: {{- include "atd.labels" . | nindent 4 }}
+spec:
+  serviceName: {{ include "atd.fullname" . }}-headless
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  podManagementPolicy: Parallel
+  selector:
+    matchLabels: {{- include "atd.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "atd.selectorLabels" . | nindent 8 }}
+        {{- with .Values.podLabels }}{{ toYaml . | nindent 8 }}{{ end }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      {{- with .Values.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- range . }}
+        - {{- toYaml . | nindent 10 }}
+          labelSelector:
+            matchLabels: {{- include "atd.selectorLabels" $ | nindent 14 }}
+        {{- end }}
+      {{- end }}
+      containers:
+        - name: detector
+          image: {{ include "atd.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: {{ include "atd.fullname" . }}
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: THREAT_AUDIT_LOG_PATH
+              value: /var/lib/agent-threat-detection/audit/$(POD_NAME).jsonl
+            - name: THREAT_SIEM_FILE_PATH
+              value: /var/lib/agent-threat-detection/findings/$(POD_NAME).jsonl
+            - name: THREAT_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.database }}
+                  key: DATABASE_URL
+            - name: THREAT_FORWARDED_ALLOW_IPS
+              value: "*"
+          readinessProbe:
+            httpGet: {path: /readyz, port: http}
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            httpGet: {path: /healthz, port: http}
+            periodSeconds: 20
+            failureThreshold: 3
+          startupProbe:
+            httpGet: {path: /healthz, port: http}
+            periodSeconds: 5
+            failureThreshold: 24
+          resources: {{- toYaml .Values.resources | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: fabric-client
+              mountPath: /etc/agent-threat-detection/fabric-client
+              readOnly: true
+            - name: audit-key
+              mountPath: /etc/agent-threat-detection/audit-key
+              readOnly: true
+            {{- if eq .Values.detector.siem.mode "http" }}
+            - name: siem-token
+              mountPath: /etc/agent-threat-detection/siem-token
+              readOnly: true
+            {{- end }}
+            - name: data
+              mountPath: /var/lib/agent-threat-detection
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: fabric-client
+          secret:
+            secretName: {{ .Values.secrets.fabricClient }}
+            defaultMode: 0400
+        - name: audit-key
+          secret:
+            secretName: {{ .Values.secrets.auditKey }}
+            defaultMode: 0400
+        {{- if eq .Values.detector.siem.mode "http" }}
+        - name: siem-token
+          secret:
+            secretName: {{ .Values.secrets.siemToken }}
+            defaultMode: 0400
+        {{- end }}
+        - name: tmp
+          emptyDir:
+            sizeLimit: 64Mi
+      {{- with .Values.nodeSelector }}
+      nodeSelector: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations: {{- toYaml . | nindent 8 }}
+      {{- end }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        {{- with .Values.persistence.storageClassName }}
+        storageClassName: {{ . }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.persistence.size }}

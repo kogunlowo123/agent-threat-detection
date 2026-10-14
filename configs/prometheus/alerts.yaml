@@ -1,0 +1,94 @@
+# PrometheusRule-compatible alert rules. Load with the Prometheus Operator
+# (kubectl apply after wrapping in a PrometheusRule) or a rule_files entry.
+# SLOs (docs/architecture/agent-specification.md):
+#   availability   99.9% of ingestion requests succeed (non-5xx)
+#   latency        p99 batch processing < 1 s for batches up to 1000 events
+#   delivery       SIEM outbox drained within 5 minutes
+#   response       pending containment approvals decided within 15 minutes
+groups:
+  - name: agent-threat-detection.slo
+    rules:
+      - record: atd:request_errors:ratio_5m
+        expr: |
+          sum(rate(atd_http_request_duration_seconds_count{status=~"5.."}[5m]))
+          /
+          clamp_min(sum(rate(atd_http_request_duration_seconds_count[5m])), 1e-9)
+
+      - alert: ThreatDetectionErrorBudgetBurnFast
+        expr: atd:request_errors:ratio_5m > (14.4 * 0.001)
+        for: 5m
+        labels: {severity: page}
+        annotations:
+          summary: Threat detection burning its error budget 14x faster than sustainable
+          runbook: docs/runbooks/incident-response.md#service-degraded
+
+      - alert: ThreatDetectionIngestLatencyHigh
+        expr: |
+          histogram_quantile(0.99, sum by (le) (rate(atd_ingest_batch_duration_seconds_bucket[5m]))) > 1
+        for: 10m
+        labels: {severity: ticket}
+        annotations:
+          summary: p99 telemetry batch processing above 1 s
+          runbook: docs/runbooks/monitoring.md#ingest-latency
+
+      - alert: ThreatDetectionTelemetryStopped
+        expr: sum(rate(atd_events_ingested_total[15m])) == 0
+        for: 15m
+        labels: {severity: page}
+        annotations:
+          summary: No agent telemetry for 15 minutes; detection is blind
+          runbook: docs/runbooks/monitoring.md#telemetry-gap
+
+  - name: agent-threat-detection.detection
+    rules:
+      - alert: CriticalAgentThreat
+        expr: atd_open_alerts{severity="critical"} > 0
+        for: 1m
+        labels: {severity: page}
+        annotations:
+          summary: Open critical agent-threat alert
+          runbook: docs/runbooks/incident-response.md#critical-alert
+
+      - alert: ContainmentAwaitingApproval
+        expr: |
+          sum(increase(atd_containment_actions_total{status="pending_approval"}[15m])) > 0
+          and on() sum(atd_open_alerts{severity=~"high|critical"}) > 0
+        for: 15m
+        labels: {severity: page}
+        annotations:
+          summary: Containment requested and still waiting for a containment approver
+          runbook: docs/runbooks/containment.md#approve
+
+      - alert: ContainmentFailed
+        expr: sum(increase(atd_containment_actions_total{status="failed"}[10m])) > 0
+        labels: {severity: page}
+        annotations:
+          summary: A containment action could not suspend the agent through the identity fabric
+          runbook: docs/runbooks/containment.md#failed
+
+      - alert: InboundAuthorizationFailing
+        expr: |
+          sum(rate(atd_inbound_authorization_total{outcome="temporarily_unavailable"}[5m])) > 0
+        for: 5m
+        labels: {severity: page}
+        annotations:
+          summary: Identity fabric unreachable; telemetry is being refused (fail closed)
+          runbook: docs/runbooks/incident-response.md#fabric-unreachable
+
+  - name: agent-threat-detection.delivery
+    rules:
+      - alert: SiemDeliveryBacklog
+        expr: atd_siem_outbox_backlog > 1000
+        for: 5m
+        labels: {severity: ticket}
+        annotations:
+          summary: OCSF findings are queuing; the SIEM is not accepting deliveries
+          runbook: docs/runbooks/monitoring.md#siem-backlog
+
+      - alert: SiemDeliveryFailing
+        expr: sum(rate(atd_siem_delivery_failures_total[10m])) > 0 and sum(rate(atd_siem_findings_delivered_total[10m])) == 0
+        for: 10m
+        labels: {severity: page}
+        annotations:
+          summary: Every SIEM delivery attempt is failing
+          runbook: docs/runbooks/monitoring.md#siem-backlog

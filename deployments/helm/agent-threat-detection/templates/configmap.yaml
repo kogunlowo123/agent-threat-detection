@@ -1,0 +1,40 @@
+{{- $d := .Values.detector -}}
+{{- $hosts := $d.mcpAllowedHosts -}}
+{{- if and (not $hosts) .Values.ingress.enabled }}{{ $hosts = list .Values.ingress.host }}{{ end -}}
+{{- if not $hosts }}{{ fail "detector.mcpAllowedHosts (or ingress.host) is required" }}{{ end -}}
+{{- if and (eq $d.siem.mode "http") (not $d.siem.url) }}{{ fail "detector.siem.url is required when detector.siem.mode=http" }}{{ end -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "atd.fullname" . }}
+  labels: {{- include "atd.labels" . | nindent 4 }}
+data:
+  THREAT_ENVIRONMENT: {{ $d.environment | quote }}
+  THREAT_PUBLIC_URL: {{ required "detector.publicUrl is required" $d.publicUrl | quote }}
+  THREAT_ANALYST_ISSUER: {{ required "detector.analyst.issuer is required" $d.analyst.issuer | quote }}
+  THREAT_ANALYST_AUDIENCE: {{ required "detector.analyst.audience is required" $d.analyst.audience | quote }}
+  THREAT_ANALYST_JWKS_URL: {{ required "detector.analyst.jwksUrl is required" $d.analyst.jwksUrl | quote }}
+  THREAT_ANALYST_ROLES_CLAIM: {{ $d.analyst.rolesClaim | quote }}
+  THREAT_FABRIC_URL: {{ required "detector.fabric.url is required" $d.fabric.url | quote }}
+  THREAT_FABRIC_TOKEN_URL: {{ required "detector.fabric.tokenUrl is required" $d.fabric.tokenUrl | quote }}
+  THREAT_FABRIC_CLIENT_ID: {{ required "detector.fabric.clientId is required" $d.fabric.clientId | quote }}
+  THREAT_FABRIC_CLIENT_SECRET_FILE: /etc/agent-threat-detection/fabric-client/client-secret
+  {{- with $d.fabric.tokenScope }}
+  THREAT_FABRIC_TOKEN_SCOPE: {{ . | quote }}
+  {{- end }}
+  THREAT_AUTHORIZATION_CACHE_SECONDS: {{ $d.fabric.authorizationCacheSeconds | quote }}
+  THREAT_AUDIT_KEY_FILE: {{ printf "/etc/agent-threat-detection/audit-key/%s" (required "secrets.auditKeyFile is required" .Values.secrets.auditKeyFile) | quote }}
+  THREAT_AUTO_CONTAINMENT: {{ $d.autoContainment | quote }}
+  THREAT_PROTECTED_AGENTS: {{ $d.protectedAgents | toJson | quote }}
+  THREAT_DETECTION__INTERNAL_DOMAIN_SUFFIXES: {{ $d.internalDomainSuffixes | toJson | quote }}
+  THREAT_MCP_ALLOWED_HOSTS: {{ $hosts | toJson | quote }}
+  THREAT_SIEM_MODE: {{ $d.siem.mode | quote }}
+  THREAT_SIEM_FORMAT: {{ $d.siem.format | quote }}
+  {{- if eq $d.siem.mode "http" }}
+  THREAT_SIEM_URL: {{ $d.siem.url | quote }}
+  THREAT_SIEM_TOKEN_FILE: /etc/agent-threat-detection/siem-token/token
+  {{- end }}
+  THREAT_LOG_LEVEL: {{ $d.logLevel | quote }}
+  {{- with $d.otlpEndpoint }}
+  THREAT_OTLP_ENDPOINT: {{ . | quote }}
+  {{- end }}

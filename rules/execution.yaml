@@ -1,0 +1,54 @@
+title: Agent invokes a shell or code-execution tool
+id: atd-execution-shell-tool
+status: stable
+level: high
+description: >
+  An agent called a tool that executes operating-system commands or arbitrary
+  code. Most business agents never need this; when they do, the tool carries
+  the attribute approved_runtime=true set by the runtime that sandboxes it.
+author: kogunlowo123
+date: 2026-10-14
+tags: [attack.execution, attack.t1059, atlas.aml.t0053]
+logsource:
+  product: agent
+  category: tool_call
+detection:
+  selection:
+    - tool|re: '(?i)(^|[._:\-])(shell|bash|sh|zsh|exec|subprocess|powershell|pwsh|cmd|eval)([._:\-]|$)'
+    - action|re: '(?i)(^|[._:\-])(shell|bash|exec|subprocess|powershell|eval)([._:\-]|$)'
+  sandboxed:
+    attributes.approved_runtime: true
+  condition: selection and not sandboxed
+falsepositives:
+  - Code-interpreter agents whose sandbox does not yet emit approved_runtime.
+---
+title: Agent reads from a credential store
+id: atd-credential-store-access
+status: stable
+level: high
+description: >
+  An agent touched a secret manager, key vault or credential file. Agents
+  receive credentials from the identity fabric and should never read them
+  from stores directly.
+author: kogunlowo123
+date: 2026-10-14
+tags: [attack.credential_access, attack.t1552]
+logsource:
+  product: agent
+detection:
+  store:
+    - resource|contains:
+        - secretsmanager
+        - keyvault
+        - secretmanager
+        - ssm:getparameter
+        - /.aws/credentials
+        - id_rsa
+        - .kube/config
+    - action|contains:
+        - secretsmanager:getsecretvalue
+        - secrets:read
+        - keyvault:get
+  condition: store
+falsepositives:
+  - Secret-rotation agents registered for this purpose; add a filter on their agent_id.

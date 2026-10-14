@@ -1,0 +1,231 @@
+{
+  "$defs": {
+    "DataClassification": {
+      "description": "Sensitivity label. Ordered from least to most restricted.",
+      "enum": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "title": "DataClassification",
+      "type": "integer"
+    },
+    "EventKind": {
+      "enum": [
+        "tool_call",
+        "model_call",
+        "authorization",
+        "token",
+        "delegation",
+        "data_transfer",
+        "content_ingest",
+        "lifecycle"
+      ],
+      "title": "EventKind",
+      "type": "string"
+    },
+    "Outcome": {
+      "enum": [
+        "success",
+        "failure",
+        "denied",
+        "require_approval"
+      ],
+      "title": "Outcome",
+      "type": "string"
+    }
+  },
+  "$id": "https://github.com/kogunlowo123/agent-threat-detection/schemas/agent-event.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "One observable action taken by (or on behalf of) an agent.",
+  "properties": {
+    "action": {
+      "description": "Tool name or scope action",
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Action",
+      "type": "string"
+    },
+    "agent_id": {
+      "description": "SPIFFE ID of the acting agent",
+      "maxLength": 512,
+      "title": "Agent Id",
+      "type": "string"
+    },
+    "attributes": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "integer"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "boolean"
+          }
+        ]
+      },
+      "maxProperties": 32,
+      "title": "Attributes",
+      "type": "object"
+    },
+    "bytes_out": {
+      "default": 0,
+      "maximum": 10000000000000,
+      "minimum": 0,
+      "title": "Bytes Out",
+      "type": "integer"
+    },
+    "classification": {
+      "$ref": "#/$defs/DataClassification",
+      "default": 1
+    },
+    "content_excerpt": {
+      "anyOf": [
+        {
+          "maxLength": 8192,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Content the agent ingested or sent. Scanned, never persisted.",
+      "title": "Content Excerpt"
+    },
+    "delegate": {
+      "anyOf": [
+        {
+          "maxLength": 512,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Agent receiving work",
+      "title": "Delegate"
+    },
+    "delegation_chain": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 16,
+      "title": "Delegation Chain",
+      "type": "array"
+    },
+    "destination": {
+      "anyOf": [
+        {
+          "maxLength": 255,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Egress host",
+      "title": "Destination"
+    },
+    "event_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9._:\\-]+$",
+      "title": "Event Id",
+      "type": "string"
+    },
+    "injection_score": {
+      "anyOf": [
+        {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Injection Score"
+    },
+    "kind": {
+      "$ref": "#/$defs/EventKind"
+    },
+    "outcome": {
+      "$ref": "#/$defs/Outcome",
+      "default": "success"
+    },
+    "resource": {
+      "anyOf": [
+        {
+          "maxLength": 1024,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Resource"
+    },
+    "scopes_requested": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 64,
+      "title": "Scopes Requested",
+      "type": "array"
+    },
+    "session_id": {
+      "anyOf": [
+        {
+          "maxLength": 128,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Session Id"
+    },
+    "timestamp": {
+      "format": "date-time",
+      "title": "Timestamp",
+      "type": "string"
+    },
+    "tool": {
+      "anyOf": [
+        {
+          "maxLength": 200,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Tool"
+    }
+  },
+  "required": [
+    "event_id",
+    "agent_id",
+    "timestamp",
+    "kind",
+    "action"
+  ],
+  "title": "AgentEvent",
+  "type": "object"
+}

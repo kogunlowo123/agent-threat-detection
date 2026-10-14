@@ -1,0 +1,52 @@
+{
+  "$id": "https://github.com/kogunlowo123/agent-threat-detection/schemas/ingest.response.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "accepted": {
+      "title": "Accepted",
+      "type": "integer"
+    },
+    "alerts_opened": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Alerts Opened",
+      "type": "array"
+    },
+    "alerts_updated": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Alerts Updated",
+      "type": "array"
+    },
+    "containment": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Containment",
+      "type": "array"
+    },
+    "duplicates": {
+      "title": "Duplicates",
+      "type": "integer"
+    },
+    "signals": {
+      "title": "Signals",
+      "type": "integer"
+    },
+    "skipped": {
+      "default": 0,
+      "description": "Records that carried no agent activity",
+      "title": "Skipped",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "accepted",
+    "duplicates",
+    "signals"
+  ],
+  "title": "IngestResult",
+  "type": "object"
+}

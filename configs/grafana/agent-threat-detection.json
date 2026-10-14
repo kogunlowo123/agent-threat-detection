@@ -1,0 +1,66 @@
+{
+  "title": "Agent Threat Detection",
+  "uid": "agent-threat-detection",
+  "schemaVersion": 39,
+  "time": {"from": "now-6h", "to": "now"},
+  "templating": {
+    "list": [
+      {"name": "datasource", "type": "datasource", "query": "prometheus"}
+    ]
+  },
+  "panels": [
+    {
+      "id": 1, "type": "stat", "title": "Open alerts by severity",
+      "gridPos": {"x": 0, "y": 0, "w": 8, "h": 5},
+      "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "targets": [{"expr": "sum by (severity) (atd_open_alerts)", "legendFormat": "{{severity}}"}]
+    },
+    {
+      "id": 2, "type": "timeseries", "title": "Events ingested by source",
+      "gridPos": {"x": 8, "y": 0, "w": 8, "h": 8},
+      "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "targets": [{"expr": "sum by (source) (rate(atd_events_ingested_total[5m]))", "legendFormat": "{{source}}"}]
+    },
+    {
+      "id": 3, "type": "timeseries", "title": "Signals and alerts",
+      "gridPos": {"x": 16, "y": 0, "w": 8, "h": 8},
+      "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "targets": [
+        {"expr": "sum(rate(atd_signals_total[5m]))", "legendFormat": "signals"},
+        {"expr": "sum by (activity) (rate(atd_alerts_total[5m]))", "legendFormat": "alerts {{activity}}"}
+      ]
+    },
+    {
+      "id": 4, "type": "timeseries", "title": "Containment actions by status",
+      "gridPos": {"x": 0, "y": 8, "w": 12, "h": 8},
+      "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "targets": [{"expr": "sum by (status) (increase(atd_containment_actions_total[1h]))", "legendFormat": "{{status}}"}]
+    },
+    {
+      "id": 5, "type": "timeseries", "title": "SIEM delivery",
+      "gridPos": {"x": 12, "y": 8, "w": 12, "h": 8},
+      "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "targets": [
+        {"expr": "sum(rate(atd_siem_findings_delivered_total[5m]))", "legendFormat": "delivered/s"},
+        {"expr": "sum(rate(atd_siem_delivery_failures_total[5m]))", "legendFormat": "failed/s"},
+        {"expr": "atd_siem_outbox_backlog", "legendFormat": "backlog"}
+      ]
+    },
+    {
+      "id": 6, "type": "timeseries", "title": "Batch processing latency (p50, p99)",
+      "gridPos": {"x": 0, "y": 16, "w": 12, "h": 8},
+      "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "fieldConfig": {"defaults": {"unit": "s"}},
+      "targets": [
+        {"expr": "histogram_quantile(0.5, sum by (le) (rate(atd_ingest_batch_duration_seconds_bucket[5m])))", "legendFormat": "p50"},
+        {"expr": "histogram_quantile(0.99, sum by (le) (rate(atd_ingest_batch_duration_seconds_bucket[5m])))", "legendFormat": "p99"}
+      ]
+    },
+    {
+      "id": 7, "type": "timeseries", "title": "Inbound authorization outcomes",
+      "gridPos": {"x": 12, "y": 16, "w": 12, "h": 8},
+      "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "targets": [{"expr": "sum by (channel, outcome) (rate(atd_inbound_authorization_total[5m]))", "legendFormat": "{{channel}} {{outcome}}"}]
+    }
+  ]
+}

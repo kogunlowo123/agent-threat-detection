@@ -1,0 +1,22 @@
+# Inbound authorization for agents and telemetry collectors when the identity
+# fabric is not configured (THREAT_FABRIC_URL unset). With the fabric
+# configured, the fabric's own policy decides and this file is not used.
+# Subject attributes come from the verified credential: scopes, delegated,
+# action_in_scope (the action matches a credential scope; scopes may use a
+# trailing wildcard such as threat:*).
+name: threat-detection-inbound
+version: "2026.10.0"
+rules:
+  - id: deny-delegated-containment-requests
+    description: Containment may only be requested by an agent acting on its own authority.
+    effect: deny
+    actions: ["containment:request"]
+    conditions:
+      - {attribute: subject.delegated, operator: eq, value: true}
+
+  - id: allow-scoped-actions
+    description: An action is allowed when the credential carries it as a scope.
+    effect: allow
+    actions: ["telemetry:write", "threat:read", "containment:request"]
+    conditions:
+      - {attribute: subject.action_in_scope, operator: eq, value: true}

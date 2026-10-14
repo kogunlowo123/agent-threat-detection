@@ -1,0 +1,20 @@
+{
+  "interactiveLogin": false,
+  "tokenCallbacks": [
+    {
+      "issuerId": "admin",
+      "tokenExpiry": 600,
+      "requestMappings": [
+        {
+          "requestParam": "client_id",
+          "match": "agent-threat-detection",
+          "claims": {
+            "sub": "agent-threat-detection",
+            "aud": ["identity-fabric-admin"],
+            "roles": ["agent-security-officer"]
+          }
+        }
+      ]
+    }
+  ]
+}

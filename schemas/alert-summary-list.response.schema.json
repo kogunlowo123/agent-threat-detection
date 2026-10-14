@@ -1,0 +1,116 @@
+{
+  "$defs": {
+    "AlertStatus": {
+      "enum": [
+        "new",
+        "acknowledged",
+        "contained",
+        "resolved",
+        "false_positive"
+      ],
+      "title": "AlertStatus",
+      "type": "string"
+    },
+    "AlertSummary": {
+      "description": "Compact alert view for agents (MCP tools, A2A responses).",
+      "properties": {
+        "agent_id": {
+          "title": "Agent Id",
+          "type": "string"
+        },
+        "alert_id": {
+          "title": "Alert Id",
+          "type": "string"
+        },
+        "containment_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Containment Id"
+        },
+        "count": {
+          "title": "Count",
+          "type": "integer"
+        },
+        "detector": {
+          "title": "Detector",
+          "type": "string"
+        },
+        "first_seen": {
+          "format": "date-time",
+          "title": "First Seen",
+          "type": "string"
+        },
+        "last_seen": {
+          "format": "date-time",
+          "title": "Last Seen",
+          "type": "string"
+        },
+        "rule_id": {
+          "title": "Rule Id",
+          "type": "string"
+        },
+        "score": {
+          "title": "Score",
+          "type": "number"
+        },
+        "severity": {
+          "title": "Severity",
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/$defs/AlertStatus"
+        },
+        "techniques": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Techniques",
+          "type": "array"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        }
+      },
+      "required": [
+        "alert_id",
+        "agent_id",
+        "title",
+        "detector",
+        "rule_id",
+        "severity",
+        "score",
+        "status",
+        "count",
+        "first_seen",
+        "last_seen",
+        "techniques",
+        "containment_id"
+      ],
+      "title": "AlertSummary",
+      "type": "object"
+    }
+  },
+  "$id": "https://github.com/kogunlowo123/agent-threat-detection/schemas/alert-summary-list.response.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "alerts": {
+      "items": {
+        "$ref": "#/$defs/AlertSummary"
+      },
+      "title": "Alerts",
+      "type": "array"
+    }
+  },
+  "required": [
+    "alerts"
+  ],
+  "title": "AlertSummaryList",
+  "type": "object"
+}

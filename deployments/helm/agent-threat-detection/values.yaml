@@ -1,0 +1,114 @@
+replicaCount: 3
+
+image:
+  repository: ghcr.io/kogunlowo123/agent-threat-detection
+  tag: ""  # defaults to .Chart.AppVersion
+  digest: ""  # set to pin an immutable sha256 digest; takes precedence over tag
+  pullPolicy: IfNotPresent
+
+serviceAccount:
+  create: true
+  name: agent-threat-detection
+  # Cloud workload identity bindings, e.g.
+  #   eks.amazonaws.com/role-arn (AWS IRSA)
+  #   azure.workload.identity/client-id (Azure Workload ID)
+  #   iam.gke.io/gcp-service-account (GKE Workload Identity)
+  annotations: {}
+
+podLabels: {}
+
+# Deployment-specific values marked REQUIRED have no default; the chart
+# refuses to render until they are set (helm install --values <env>.yaml).
+detector:
+  environment: production
+  publicUrl: ""  # REQUIRED: public HTTPS URL, advertised in the A2A agent card
+  logLevel: INFO
+  otlpEndpoint: ""  # optional OTLP gRPC endpoint
+  analyst:
+    issuer: ""  # REQUIRED: enterprise OIDC issuer for SOC analysts
+    audience: ""  # REQUIRED: audience of analyst tokens
+    jwksUrl: ""  # REQUIRED: JWKS URL of the enterprise OIDC issuer
+    rolesClaim: roles
+  fabric:
+    url: ""  # REQUIRED: base URL of the agent identity fabric
+    tokenUrl: ""  # REQUIRED: enterprise IdP token endpoint (client credentials)
+    clientId: ""  # REQUIRED: client id holding the agent-security-officer role
+    tokenScope: ""  # optional scope, e.g. api://identity-fabric/.default on Entra ID
+    authorizationCacheSeconds: 30
+  autoContainment: true
+  # Glob patterns of agents that only a human may contain (tier-0 platform agents).
+  protectedAgents: []
+  # DNS suffixes inside the enterprise boundary; egress elsewhere is "external".
+  internalDomainSuffixes: []
+  siem:
+    mode: http  # http | file
+    url: ""  # required when mode=http
+    format: ocsf  # ocsf | splunk_hec
+  # Host header values accepted on /mcp; defaults to ingress.host when empty.
+  mcpAllowedHosts: []
+
+# Secrets are created by the platform secret operator (External Secrets,
+# Secrets Store CSI) from the cloud secret manager provisioned by Terraform.
+secrets:
+  # Secret holding key DATABASE_URL (postgresql+asyncpg://...).
+  database: agent-threat-detection-database
+  # Secret holding key client-secret for the fabric client-credentials grant.
+  fabricClient: agent-threat-detection-fabric-client
+  # Secret holding the Ed25519 audit signing key.
+  auditKey: agent-threat-detection-audit-key
+  auditKeyFile: ""  # REQUIRED: file name of the audit key within secrets.auditKey
+  # Secret holding key token for the SIEM collector (mode=http).
+  siemToken: agent-threat-detection-siem-token
+
+persistence:
+  storageClassName: ""
+  size: 20Gi
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: false
+  className: ""
+  host: ""  # required when ingress.enabled
+  tlsSecret: agent-threat-detection-tls
+  annotations: {}
+
+resources:
+  requests:
+    cpu: 500m
+    memory: 512Mi
+  limits:
+    cpu: "2"
+    memory: 1Gi
+
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 12
+  targetCPUUtilizationPercentage: 70
+
+podDisruptionBudget:
+  minAvailable: 2
+
+networkPolicy:
+  enabled: true
+  # Namespaces whose pods may call the detector (collectors, agents, SOC tooling).
+  allowedNamespaceLabels:
+    agent-platform/member: "true"
+  monitoringNamespaceLabels:
+    kubernetes.io/metadata.name: observability
+  ingressNamespaceLabels:
+    kubernetes.io/metadata.name: ingress-nginx
+
+serviceMonitor:
+  enabled: false
+  interval: 30s
+
+nodeSelector: {}
+tolerations: []
+topologySpreadConstraints:
+  - maxSkew: 1
+    topologyKey: topology.kubernetes.io/zone
+    whenUnsatisfiable: ScheduleAnyway

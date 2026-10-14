@@ -1,0 +1,48 @@
+title: Agent disables or deletes audit logging
+id: atd-audit-tampering
+status: stable
+level: critical
+description: >
+  An agent attempted to stop, delete or reconfigure audit logging. No agent
+  mandate in this platform includes impairing audit; treat as hostile.
+author: kogunlowo123
+date: 2026-10-14
+tags: [attack.defense_evasion, attack.t1562]
+logsource:
+  product: agent
+detection:
+  tamper:
+    action|contains:
+      - cloudtrail:stoplogging
+      - cloudtrail:deletetrail
+      - cloudtrail:updatetrail
+      - logging.sinks.delete
+      - logging:deletesink
+      - monitor:diagnosticsettings/delete
+      - audit.delete
+      - audit.disable
+      - guardduty:deletedetector
+  condition: tamper
+falsepositives:
+  - None expected for agent identities.
+---
+title: Agent modifies identity and access policy
+id: atd-iam-policy-change
+status: stable
+level: high
+description: >
+  An agent attached, created or replaced an IAM policy or role binding. This
+  is a privilege-escalation path when an agent can widen its own access.
+author: kogunlowo123
+date: 2026-10-14
+tags: [attack.privilege_escalation, attack.t1098]
+logsource:
+  product: agent
+detection:
+  change:
+    action|re: '(?i)(iam[:.](attach|put|create|update)\w*(policy|role)|setiampolicy|roleassignments/write)'
+  succeeded:
+    outcome: success
+  condition: change and succeeded
+falsepositives:
+  - Infrastructure agents operating under an approved change; correlate with the change record.

@@ -1,0 +1,26 @@
+# Values used by CI to render and schema-validate the chart (helm lint,
+# helm template | kubeconform). They describe a complete, valid deployment.
+detector:
+  publicUrl: https://threat.agents.ci.internal
+  analyst:
+    issuer: https://login.ci.internal
+    audience: agent-threat-detection
+    jwksUrl: https://login.ci.internal/jwks
+  fabric:
+    url: https://identity.agents.ci.internal
+    tokenUrl: https://login.ci.internal/oauth2/token
+    clientId: agent-threat-detection
+  protectedAgents:
+    - spiffe://agents.ci.internal/agent/platform/*
+  internalDomainSuffixes:
+    - ci.internal
+  siem:
+    url: https://siem.ci.internal/ocsf
+secrets:
+  auditKeyFile: audit-2026-10.pem
+ingress:
+  enabled: true
+  className: nginx
+  host: threat.agents.ci.internal
+serviceMonitor:
+  enabled: true

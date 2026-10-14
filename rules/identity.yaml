@@ -1,0 +1,46 @@
+title: Token exchange storm
+id: atd-token-exchange-storm
+status: stable
+level: medium
+description: >
+  More than 20 token exchanges by one agent within five minutes. Normal
+  delegation is occasional; a storm suggests a loop or token harvesting.
+author: kogunlowo123
+date: 2026-10-14
+tags: [attack.lateral_movement, attack.t1550]
+logsource:
+  product: agent
+detection:
+  exchange:
+    kind:
+      - delegation
+      - token
+    action: token.exchange
+  timeframe: 5m
+  condition: exchange | count() by agent_id > 20
+falsepositives:
+  - Orchestrators fanning out large batch jobs.
+---
+title: Agent requests wildcard or administrative scopes
+id: atd-wildcard-scope-request
+status: stable
+level: high
+description: >
+  A credential request asked for a bare wildcard or an administrative scope.
+  Agent registrations never grant these, so the request is either a
+  misconfiguration or an escalation attempt.
+author: kogunlowo123
+date: 2026-10-14
+tags: [attack.privilege_escalation, attack.t1134]
+logsource:
+  product: agent
+detection:
+  scopes:
+    scopes_requested:
+      - '\*'
+      - '\*:\*'
+      - 'admin:\*'
+      - 'iam:admin'
+  condition: scopes
+falsepositives:
+  - None expected.

@@ -1,0 +1,121 @@
+{
+  "$defs": {
+    "Severity": {
+      "enum": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "title": "Severity",
+      "type": "integer"
+    },
+    "Technique": {
+      "description": "A MITRE ATT&CK or ATLAS technique with its tactic.",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "tactic_name": {
+          "title": "Tactic Name",
+          "type": "string"
+        },
+        "tactic_uid": {
+          "title": "Tactic Uid",
+          "type": "string"
+        },
+        "uid": {
+          "title": "Uid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "uid",
+        "name",
+        "tactic_uid",
+        "tactic_name"
+      ],
+      "title": "Technique",
+      "type": "object"
+    }
+  },
+  "$id": "https://github.com/kogunlowo123/agent-threat-detection/schemas/signal.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "One detector's verdict on one event.",
+  "properties": {
+    "agent_id": {
+      "title": "Agent Id",
+      "type": "string"
+    },
+    "description": {
+      "title": "Description",
+      "type": "string"
+    },
+    "detector": {
+      "description": "e.g. sequence.rare_transition or sigma",
+      "title": "Detector",
+      "type": "string"
+    },
+    "discriminator": {
+      "default": "",
+      "description": "What makes two signals the same alert",
+      "title": "Discriminator",
+      "type": "string"
+    },
+    "event_id": {
+      "title": "Event Id",
+      "type": "string"
+    },
+    "evidence": {
+      "additionalProperties": true,
+      "title": "Evidence",
+      "type": "object"
+    },
+    "observed_at": {
+      "format": "date-time",
+      "title": "Observed At",
+      "type": "string"
+    },
+    "rule_id": {
+      "title": "Rule Id",
+      "type": "string"
+    },
+    "score": {
+      "description": "Confidence that this is malicious",
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Score",
+      "type": "number"
+    },
+    "severity": {
+      "$ref": "#/$defs/Severity"
+    },
+    "techniques": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/Technique"
+      },
+      "title": "Techniques",
+      "type": "array"
+    },
+    "title": {
+      "title": "Title",
+      "type": "string"
+    }
+  },
+  "required": [
+    "detector",
+    "rule_id",
+    "title",
+    "description",
+    "severity",
+    "score",
+    "event_id",
+    "agent_id",
+    "observed_at"
+  ],
+  "title": "Signal",
+  "type": "object"
+}

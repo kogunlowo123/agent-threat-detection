@@ -1,0 +1,76 @@
+{
+  "$defs": {
+    "AuditRecord": {
+      "description": "The subset of an agentic-core ``AuditEvent`` the detector consumes.",
+      "properties": {
+        "action": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Action",
+          "type": "string"
+        },
+        "actor": {
+          "maxLength": 512,
+          "title": "Actor",
+          "type": "string"
+        },
+        "details": {
+          "additionalProperties": true,
+          "title": "Details",
+          "type": "object"
+        },
+        "event_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9._:\\-]+$",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "outcome": {
+          "maxLength": 64,
+          "title": "Outcome",
+          "type": "string"
+        },
+        "resource": {
+          "maxLength": 1024,
+          "title": "Resource",
+          "type": "string"
+        },
+        "timestamp": {
+          "format": "date-time",
+          "title": "Timestamp",
+          "type": "string"
+        }
+      },
+      "required": [
+        "event_id",
+        "timestamp",
+        "actor",
+        "action",
+        "resource",
+        "outcome"
+      ],
+      "title": "AuditRecord",
+      "type": "object"
+    }
+  },
+  "$id": "https://github.com/kogunlowo123/agent-threat-detection/schemas/audit-batch.request.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "events": {
+      "items": {
+        "$ref": "#/$defs/AuditRecord"
+      },
+      "maxItems": 1000,
+      "minItems": 1,
+      "title": "Events",
+      "type": "array"
+    }
+  },
+  "required": [
+    "events"
+  ],
+  "title": "AuditBatch",
+  "type": "object"
+}

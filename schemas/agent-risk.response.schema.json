@@ -1,0 +1,288 @@
+{
+  "$defs": {
+    "ContainmentAction": {
+      "description": "Suspension of an agent through the identity fabric, with its approval trail.",
+      "properties": {
+        "action": {
+          "default": "suspend",
+          "title": "Action",
+          "type": "string"
+        },
+        "agent_id": {
+          "title": "Agent Id",
+          "type": "string"
+        },
+        "alert_id": {
+          "title": "Alert Id",
+          "type": "string"
+        },
+        "approved_by": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Approved By"
+        },
+        "attempts": {
+          "default": 0,
+          "title": "Attempts",
+          "type": "integer"
+        },
+        "automatic": {
+          "title": "Automatic",
+          "type": "boolean"
+        },
+        "containment_id": {
+          "title": "Containment Id",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "decision": {
+          "$ref": "#/$defs/Decision"
+        },
+        "error": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Error"
+        },
+        "executed_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Executed At"
+        },
+        "matched_rules": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Matched Rules",
+          "type": "array"
+        },
+        "policy_digest": {
+          "title": "Policy Digest",
+          "type": "string"
+        },
+        "policy_version": {
+          "title": "Policy Version",
+          "type": "string"
+        },
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        },
+        "rejected_by": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rejected By"
+        },
+        "requested_by": {
+          "title": "Requested By",
+          "type": "string"
+        },
+        "rolled_back_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rolled Back At"
+        },
+        "rolled_back_by": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rolled Back By"
+        },
+        "status": {
+          "$ref": "#/$defs/ContainmentStatus"
+        },
+        "updated_at": {
+          "format": "date-time",
+          "title": "Updated At",
+          "type": "string"
+        },
+        "version": {
+          "default": 1,
+          "title": "Version",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "agent_id",
+        "alert_id",
+        "status",
+        "automatic",
+        "decision",
+        "matched_rules",
+        "policy_version",
+        "policy_digest",
+        "reason",
+        "requested_by",
+        "created_at",
+        "updated_at"
+      ],
+      "title": "ContainmentAction",
+      "type": "object"
+    },
+    "ContainmentStatus": {
+      "enum": [
+        "pending_approval",
+        "executed",
+        "failed",
+        "rejected",
+        "rolled_back"
+      ],
+      "title": "ContainmentStatus",
+      "type": "string"
+    },
+    "Decision": {
+      "description": "Outcome of a policy or security evaluation.",
+      "enum": [
+        "allow",
+        "deny",
+        "require_approval"
+      ],
+      "title": "Decision",
+      "type": "string"
+    }
+  },
+  "$id": "https://github.com/kogunlowo123/agent-threat-detection/schemas/agent-risk.response.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "What an analyst needs to judge an agent's current state.",
+  "properties": {
+    "agent_id": {
+      "title": "Agent Id",
+      "type": "string"
+    },
+    "baseline_mature": {
+      "title": "Baseline Mature",
+      "type": "boolean"
+    },
+    "containment": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ContainmentAction"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "delegates": {
+      "title": "Delegates",
+      "type": "integer"
+    },
+    "destinations": {
+      "title": "Destinations",
+      "type": "integer"
+    },
+    "events_learned": {
+      "title": "Events Learned",
+      "type": "integer"
+    },
+    "events_seen": {
+      "title": "Events Seen",
+      "type": "integer"
+    },
+    "max_classification": {
+      "title": "Max Classification",
+      "type": "integer"
+    },
+    "max_delegation_depth": {
+      "title": "Max Delegation Depth",
+      "type": "integer"
+    },
+    "open_alerts": {
+      "title": "Open Alerts",
+      "type": "integer"
+    },
+    "risk": {
+      "title": "Risk",
+      "type": "number"
+    },
+    "tool_novelty_mass": {
+      "title": "Tool Novelty Mass",
+      "type": "number"
+    },
+    "tools": {
+      "title": "Tools",
+      "type": "integer"
+    },
+    "top_tools": {
+      "items": {
+        "maxItems": 2,
+        "minItems": 2,
+        "prefixItems": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "integer"
+          }
+        ],
+        "type": "array"
+      },
+      "title": "Top Tools",
+      "type": "array"
+    }
+  },
+  "required": [
+    "agent_id",
+    "baseline_mature",
+    "events_seen",
+    "events_learned",
+    "risk",
+    "tools",
+    "destinations",
+    "delegates",
+    "max_classification",
+    "max_delegation_depth",
+    "tool_novelty_mass",
+    "top_tools",
+    "open_alerts",
+    "containment"
+  ],
+  "title": "AgentRiskView",
+  "type": "object"
+}

@@ -1,0 +1,232 @@
+{
+  "$defs": {
+    "AlertStatus": {
+      "enum": [
+        "new",
+        "acknowledged",
+        "contained",
+        "resolved",
+        "false_positive"
+      ],
+      "title": "AlertStatus",
+      "type": "string"
+    },
+    "EvidenceItem": {
+      "properties": {
+        "detector": {
+          "title": "Detector",
+          "type": "string"
+        },
+        "event_id": {
+          "title": "Event Id",
+          "type": "string"
+        },
+        "evidence": {
+          "additionalProperties": true,
+          "title": "Evidence",
+          "type": "object"
+        },
+        "observed_at": {
+          "format": "date-time",
+          "title": "Observed At",
+          "type": "string"
+        },
+        "score": {
+          "title": "Score",
+          "type": "number"
+        }
+      },
+      "required": [
+        "event_id",
+        "observed_at",
+        "detector",
+        "score",
+        "evidence"
+      ],
+      "title": "EvidenceItem",
+      "type": "object"
+    },
+    "Severity": {
+      "enum": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "title": "Severity",
+      "type": "integer"
+    },
+    "Technique": {
+      "description": "A MITRE ATT&CK or ATLAS technique with its tactic.",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "tactic_name": {
+          "title": "Tactic Name",
+          "type": "string"
+        },
+        "tactic_uid": {
+          "title": "Tactic Uid",
+          "type": "string"
+        },
+        "uid": {
+          "title": "Uid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "uid",
+        "name",
+        "tactic_uid",
+        "tactic_name"
+      ],
+      "title": "Technique",
+      "type": "object"
+    }
+  },
+  "$id": "https://github.com/kogunlowo123/agent-threat-detection/schemas/alert.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "A deduplicated finding. Repeated signals with the same key update it.",
+  "properties": {
+    "agent_id": {
+      "title": "Agent Id",
+      "type": "string"
+    },
+    "alert_id": {
+      "title": "Alert Id",
+      "type": "string"
+    },
+    "containment_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Containment Id"
+    },
+    "count": {
+      "default": 1,
+      "title": "Count",
+      "type": "integer"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "dedup_key": {
+      "title": "Dedup Key",
+      "type": "string"
+    },
+    "description": {
+      "title": "Description",
+      "type": "string"
+    },
+    "detector": {
+      "title": "Detector",
+      "type": "string"
+    },
+    "evidence": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/EvidenceItem"
+      },
+      "title": "Evidence",
+      "type": "array"
+    },
+    "first_seen": {
+      "format": "date-time",
+      "title": "First Seen",
+      "type": "string"
+    },
+    "last_seen": {
+      "format": "date-time",
+      "title": "Last Seen",
+      "type": "string"
+    },
+    "resolution_note": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Resolution Note"
+    },
+    "resolved_by": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Resolved By"
+    },
+    "rule_id": {
+      "title": "Rule Id",
+      "type": "string"
+    },
+    "score": {
+      "title": "Score",
+      "type": "number"
+    },
+    "severity": {
+      "$ref": "#/$defs/Severity"
+    },
+    "status": {
+      "$ref": "#/$defs/AlertStatus",
+      "default": "new"
+    },
+    "techniques": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/Technique"
+      },
+      "title": "Techniques",
+      "type": "array"
+    },
+    "title": {
+      "title": "Title",
+      "type": "string"
+    },
+    "updated_at": {
+      "format": "date-time",
+      "title": "Updated At",
+      "type": "string"
+    },
+    "version": {
+      "default": 1,
+      "title": "Version",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "dedup_key",
+    "agent_id",
+    "detector",
+    "rule_id",
+    "title",
+    "description",
+    "severity",
+    "score",
+    "first_seen",
+    "last_seen",
+    "created_at",
+    "updated_at"
+  ],
+  "title": "Alert",
+  "type": "object"
+}

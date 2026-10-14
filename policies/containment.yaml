@@ -1,0 +1,75 @@
+# Containment policy, evaluated by the agentic-core PolicyEngine before any
+# agent is suspended through the identity fabric.
+# Combining: deny overrides, then require_approval, then allow; default deny.
+#
+# Facts:
+#   subject.kind            service (the detector itself) | agent (MCP / A2A request)
+#   resource.severity       0=informational 1=low 2=medium 3=high 4=critical
+#   resource.score          alert confidence, 0..1
+#   resource.detector       detector or "sigma"
+#   resource.protected      true when the agent matches THREAT_PROTECTED_AGENTS
+#   environment.auto_containment  THREAT_AUTO_CONTAINMENT
+name: agent-containment
+version: "2026.10.0"
+rules:
+  - id: deny-below-high
+    description: Medium and lower severity alerts never suspend an agent.
+    effect: deny
+    actions: ["containment:suspend"]
+    resource_types: ["agent"]
+    conditions:
+      - {attribute: resource.severity, operator: lt, value: 3}
+
+  - id: approve-protected-agents
+    description: Tier-0 agents (platform, identity, security tooling) are only contained by a human.
+    effect: require_approval
+    actions: ["containment:suspend"]
+    resource_types: ["agent"]
+    conditions:
+      - {attribute: resource.protected, operator: eq, value: true}
+
+  - id: approve-agent-requested
+    description: An agent may ask for containment; a human always decides.
+    effect: require_approval
+    actions: ["containment:suspend"]
+    resource_types: ["agent"]
+    conditions:
+      - {attribute: subject.kind, operator: ne, value: service}
+
+  - id: approve-high
+    description: High severity alerts are contained after a containment approver signs off.
+    effect: require_approval
+    actions: ["containment:suspend"]
+    resource_types: ["agent"]
+    conditions:
+      - {attribute: resource.severity, operator: eq, value: 3}
+
+  - id: approve-critical-low-confidence
+    description: Critical alerts below 0.9 confidence still need a human.
+    effect: require_approval
+    actions: ["containment:suspend"]
+    resource_types: ["agent"]
+    conditions:
+      - {attribute: resource.severity, operator: gte, value: 4}
+      - {attribute: resource.score, operator: lt, value: 0.9}
+
+  - id: approve-when-auto-disabled
+    description: With automatic containment switched off every suspension is approved by a human.
+    effect: require_approval
+    actions: ["containment:suspend"]
+    resource_types: ["agent"]
+    conditions:
+      - {attribute: environment.auto_containment, operator: ne, value: true}
+
+  - id: allow-auto-critical
+    description: >
+      Critical, high-confidence alerts suspend the agent immediately; the
+      suspension is reversible through the rollback endpoint.
+    effect: allow
+    actions: ["containment:suspend"]
+    resource_types: ["agent"]
+    conditions:
+      - {attribute: subject.kind, operator: eq, value: service}
+      - {attribute: resource.severity, operator: gte, value: 4}
+      - {attribute: resource.score, operator: gte, value: 0.9}
+      - {attribute: environment.auto_containment, operator: eq, value: true}
